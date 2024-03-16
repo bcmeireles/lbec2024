@@ -50,30 +50,22 @@ def register():
 # User login route
 @app.route('/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
+    email = request.json.get('email')
+    password = request.json.get('password')
 
-    # Check if all fields are present
-    if not email or not password:
-        return jsonify({'error': 'Missing fields'}), 400
-
-    # Check if user exists
     user = users.find_one({'email': email})
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
 
-    # Check if password is correct
-    if not check_password_hash(user['hashed_password'], password):
-        return jsonify({'error': 'Invalid password'}), 401
+    print(user)
+    if not user or not check_password_hash(user['hashed_password'], password):
+        return jsonify({'success': False, 'message': 'Invalid email or password'})
 
-    # Generate a JWT token for the authenticated user
     token = jwt.encode({
-        'user_id': str(user['_id']),
+        'id': str(user['_id']),
+        'email': user['email'],
         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)
     }, app.config['SECRET_KEY'])
 
-    return jsonify({'token': token}), 200
+    return jsonify({'success': True, 'token': token})
 
 # Protected route example
 @app.route('/protected', methods=['GET'])
