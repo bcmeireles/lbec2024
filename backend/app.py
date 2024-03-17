@@ -368,10 +368,33 @@ def getMinimumElectricity(email):
     averageElectricity = 0
     l_atHome = []
     
+    if not athome_data:
+        return 0
+
     for data in athome_data:
         l_atHome.append(data['electricity'])
+
+    if len(l_atHome) == 0:
+        return 0
     
     return statistics.median(l_atHome) * 0.15
+
+def getWastedEnergyByHeat(email, date):
+    max_house_temp = getUserDict(email)['max_house_temp']
+    min_house_temp = getUserDict(email)['min_house_temp']
+
+    date = consumption_data.find({'email': email, 'date': date})
+    dif_degrees = 0
+    cost = 0
+    for data in date:
+        temp = data['temperature']
+        cost += data['electricity']
+        if temp > max_house_temp:
+            dif_degrees += temp - max_house_temp
+        elif temp < min_house_temp:
+            dif_degrees += min_house_temp - temp
+
+    return 0.03 * dif_degrees * cost
 
 @app.route("/daygraph", methods=["POST"])
 @jwt_required()
@@ -426,6 +449,8 @@ def getDayGraph():
     total_usage = getDayUsage(email, date)
     total_costs = [total_usage[0] * getUserCosts(email)[0], total_usage[1] * getUserCosts(email)[1], total_usage[2] * getUserCosts(email)[2]]
 
+    waste = getWastedEnergyByHeat(email, date)
+
     return jsonify({"success": True, "status": "success", "data": {
         "total_usage": {
             "gas": total_usage[0],
@@ -437,6 +462,8 @@ def getDayGraph():
             "electricity": total_costs[1],
             "water": total_costs[2]
         },
+        "wasted": waste,
+        "wasted_money": waste * getUserCosts(email)[1],
         "graph": "data:image/png;base64," + img_data
     }})
 
@@ -458,6 +485,8 @@ def getRangeGraph():
     ideal_electricity_usage = []
     water_usage = []
     ideal_water_usage = []
+
+    wasted = 0
 
     current_date = start_date.date()  # convert to date object to remove time
     while current_date <= end_date.date():  # convert to date object to remove time
@@ -481,6 +510,8 @@ def getRangeGraph():
             ideal_gas_usage.append(None)
             ideal_electricity_usage.append(None)
             ideal_water_usage.append(None)
+
+        wasted += getWastedEnergyByHeat(email, str(current_date))
 
         current_date += timedelta(days=1)
 
@@ -532,6 +563,8 @@ def getRangeGraph():
             "electricity": total_costs[1],
             "water": total_costs[2]
         },
+        "wasted": wasted,
+        "wasted_money": wasted * getUserCosts(email)[1],
         "graph": "data:image/png;base64," + img_data
     }})
 

@@ -21,6 +21,8 @@ function OverviewRange() {
   const [totalUsage, setTotalUsage] = useState<Usage>({ electricity: 0, gas: 0, water: 0 });
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
+  const [waste, setWaste] = useState(0);
+  const [wastedMoney, setWastedMoney] = useState(0);
 
     const fetchData = async () => {
       const token = localStorage.getItem('token');
@@ -43,6 +45,8 @@ function OverviewRange() {
         setTotalCosts(data.data.total_costs);
         setTotalUsage(data.data.total_usage);
         setGraphData(data.data.graph);
+        setWaste(data.data.wasted);
+        setWastedMoney(data.data.wasted_money);
       } else {
         console.log('Error:', response.status);
       }
@@ -70,23 +74,28 @@ function OverviewRange() {
 
           <img src={graphData} className="mt-16" alt="Graph" />
 
-          <div className="flex space-x-16 mt-16">
-            <div className="flex flex-col items-center space-y-2">
-              <h3 className="text-xl font-bold">Electricity</h3>
-              <p className="text-sm">Total: {totalUsage.electricity} kWh</p>
-              <p className="text-sm">Cost: {totalCosts.electricity} €</p>
-            </div>
-            <div className="flex flex-col items-center space-y-2">
-              <h3 className="text-xl font-bold">Gas</h3>
-              <p className="text-sm">Total: {totalUsage.gas} m³</p>
-              <p className="text-sm">Cost: {totalCosts.gas} €</p>
-            </div>
-            <div className="flex flex-col items-center space-y-2">
-              <h3 className="text-xl font-bold">Water</h3>
-              <p className="text-sm">Total: {totalUsage.water} m³</p>
-              <p className="text-sm">Cost: {totalCosts.water} €</p>
-            </div>
+          <div className="grid grid-cols-2 grid-rows-2 gap-8 mt-16">
+          <div className="flex flex-col items-center space-y-2">
+            <h3 className="text-xl font-bold">Electricity</h3>
+            <p className="text-sm">Total: {totalUsage.electricity} kWh</p>
+            <p className="text-sm">Cost: {totalCosts.electricity} €</p>
           </div>
+          <div className="flex flex-col items-center space-y-2">
+            <h3 className="text-xl font-bold">Gas</h3>
+            <p className="text-sm">Total: {totalUsage.gas} m³</p>
+            <p className="text-sm">Cost: {totalCosts.gas} €</p>
+          </div>
+          <div className="flex flex-col items-center space-y-2">
+            <h3 className="text-xl font-bold">Water</h3>
+            <p className="text-sm">Total: {totalUsage.water} m³</p>
+            <p className="text-sm">Cost: {totalCosts.water} €</p>
+          </div>
+          <div className="flex flex-col items-center space-y-2">
+            <h3 className="text-xl font-bold">Bad Heat Use</h3>
+            <p className="text-sm">Total: {waste} kwH </p>
+            <p className="text-sm">{wastedMoney} €</p>
+          </div>
+        </div>
           <div className="flex flex-col items-center">
             <button onClick={() => window.location.href = "/range"} className="py-4 px-11 bg-blue-500 text-white rounded-lg mt-12 font-bold">Day View</button>
           </div>
