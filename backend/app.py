@@ -16,6 +16,7 @@ main_db = mongo['lbec2024']
 
 users = main_db['users']
 consumption_data = main_db['consumption_data']
+calendar_data = main_db['calendar_data']
 
 app.config["JWT_SECRET_KEY"] = "do-not-want-to-change"
 jwt = JWTManager(app)
@@ -97,7 +98,7 @@ def logout():
     unset_jwt_cookies(response)
     return response
 
-@app.route('/profile')
+@app.route("/profile", methods=["GET"])
 @jwt_required()
 def my_profile():
 
@@ -107,7 +108,7 @@ def my_profile():
     # get the user from the database
     user = users.find_one({'email': email})
 
-    return jsonify({"status": "success", "data": str(user)})
+    return jsonify({"status": "success", "data": user["name"]})
 
 @app.route("/settings", methods=["GET"])
 @jwt_required()
@@ -142,6 +143,63 @@ def update_settings():
 
     return jsonify({"success": True, "status": "success", "message": "Settings updated successfully"})
 
+@app.route("/consumption", methods=["POST"])
+@jwt_required()
+def add_consumption_data():
+    email = get_jwt_identity()
+    data = request.get_json()
+
+    if not data:
+        return jsonify({'error': 'Missing fields'}), 400
+    
+    if not all(x in data.keys() for x in ["gas", "electricity", "water", "temperature", "atHome", "date", "timeslot"]):
+        return jsonify({'error': 'Missing fields'}), 400
+
+    consumption_data.insert_one({
+        "email": email,
+        "gas": data['gas'],
+        "electricity": data['electricity'],
+        "water": data['water'],
+        "temperature": data['temperature'],
+        "atHome": data['atHome'],
+        "date": data['date'],
+        "timeslot": data['timeslot']
+    })
+
+    return jsonify({"success": True, "status": "success", "message": "Consumption data added successfully"})
+
+@app.route("/events", methods=["GET"])
+@jwt_required()
+def get_events():
+    email = get_jwt_identity()
+    events = calendar_data.find({"email": email})
+    returning = []
+    for event in events:
+        del event['email']
+        del event['_id']
+        returning.append(event)
+    return jsonify({"success": True, "status": "success", "data": returning})
+
+@app.route("/events", methods=["POST"])
+@jwt_required()
+def add_event():
+    email = get_jwt_identity()
+    data = request.get_json()
+
+    if not data:
+        return jsonify({'error': 'Missing fields'}), 400
+    
+    if not all(x in data.keys() for x in ["title", "start", "end"]):
+        return jsonify({'error': 'Missing fields'}), 400
+
+    calendar_data.insert_one({
+        "email": email,
+        "title": data['title'],
+        "start": data['start'],
+        "end": data['end']
+    })
+
+    return jsonify({"success": True, "status": "success", "message": "Event added successfully"})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
