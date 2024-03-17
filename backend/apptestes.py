@@ -1,7 +1,21 @@
-   
+from flask import Flask, request, jsonify
+from numpy import mod
+import pandas as pd
+from pymongo import MongoClient
+from bson.objectid import ObjectId
+from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import datetime
+from constants import GAS_PRICE, WATER_PRICE, ELETRICITY_PRICE
+from flask_cors import CORS
+from datetime import datetime, timedelta
+import plotly.express as px
+import plotly.graph_objects as go   
+
+'''
 @app.route('C', methods=['GET'])
 def dayClicked(email, date):
-    usage = aux_getUsageDay(email,date)
+    usage = getUsageDay(email,date)
     cost = getPriceDay(email, date)
     data = {
         'graph' : getDayGraph(email, date),
@@ -40,15 +54,31 @@ def monthClicked(email, date):
         'wastedmoney' : cost - getIdealPrice(email,date)
     }
     return jsonify(data)
+'''
+
+
+app = Flask(__name__)
+CORS(app)
+
+mongo = MongoClient('localhost', 27017)
+main_db = mongo['lbec2024']
+
+users = main_db['users']
+consumption_data = main_db['consumption_data']
 
 
 
+def getGasPrice(email):
+    user = users.find_one({'email': email})
+    return user['gas_price']
 
+def getWaterPrice(email):
+    user = users.find_one({'email': email})
+    return user['water_price']
 
-
-
-
-
+def getElecPrice(email):
+    user = users.find_one({'email': email})
+    return user['electricity_price']
 
 
 #By day
@@ -164,7 +194,7 @@ def getIdealDay(email,date):
     
 def getPriceDay(email, date):
     usage = getUsageDay(email, date)
-    return usage['gas']* GAS_PRICE + usage['electricity']*ELECTRICITY_PRICE + usage['water']*WATER_PRICE
+    return usage['gas']* getGasPrice(email) + usage['electricity']*getElecPrice(email) + usage['water']*getWaterPrice(email)
 
 def getIdealPriceDay(email, date):
     idealDay = getIdealDay(email,date)
@@ -510,7 +540,7 @@ def getMonthGraph(email, date):
         month_data.append(getUsageDay(email, date))
         ideal_month_data.append(getIdealDay(email,date))
         
-    for y in idealData:
+    for x in ideal_month_data:
         i_electricity.append(x['electricity'])
         i_water.append(x['water']) 
         i_gas.append(x['gas'])
@@ -546,7 +576,7 @@ def getIdealGraphMonth(email, date):
     fig = go.Figure(data=[go.Pie(labels=label, values=usages, marker_colors = colors)])
     return fig
 
-@app.route('B', methods=['GET'])
+'''@app.route('B', methods=['GET'])
 def monthClicked(email, date):
     usage = aux_getUsageMonth(email,date)
     cost = getPriceMonth(email, date)
@@ -558,5 +588,5 @@ def monthClicked(email, date):
         'wastedelectricity' : (usage['electricity'] - usage['inhouseelectricity']) * 0.85 + (usage['tempchange'] - usage['inhousetempchange']) * 0.03 * 0.46,
         'wastedmoney' : cost - getIdealPrice(email,date)
     }
-    return jsonify(data)
+    return jsonify(data)'''
 
