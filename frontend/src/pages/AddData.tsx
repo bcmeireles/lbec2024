@@ -40,6 +40,20 @@ function AddData() {
   const handleSubmitAll = () => {
     // Send 3 requests, one for each form
     console.log('Submitting all forms');
+
+    const token = localStorage.getItem('token');
+    const requests = Object.entries(forms).map(([timeslot, form]) => {
+      return fetch('http://localhost:5000/consumption', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(form),
+      }).then((response) => {
+        console.log(`Form ${timeslot} submitted`);
+      });
+    });
   };
 
   return (
