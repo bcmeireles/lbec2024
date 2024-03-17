@@ -52,7 +52,24 @@ class ConsumptionForm extends React.Component<Props, State> {
   handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("Submitting " + this.props.selectedForm + " form: " + JSON.stringify(this.props.form));
+
+    const token = localStorage.getItem('token');
+    fetch('http://localhost:5000/consumption', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(this.props.form)
+    }).then((response) => {
+      if (response.ok) {
+        console.log("Form submitted successfully");
+      } else {
+        console.log("Error:", response.status);
+      }
+    });
   };
+
 
   render() {
     const { date, setDate, form, setForm } = this.props;

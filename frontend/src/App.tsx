@@ -3,10 +3,11 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import Overview from './pages/Overview';
-import Calendar from './pages/Calendar';
+import MyCalendar from './pages/calendar/MyCalendar';
 import AddData from './pages/AddData';
 import User from './pages/User';
 import NewInput from './pages/NewInput';
+import CreateEvent from './pages/calendar/CreateEvent';
 
 function App() {
   return (
@@ -16,8 +17,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<h1>Home Page</h1>} />
         <Route path="/overview" element={<Overview />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/newinput" element={<NewInput name="Joaquim" />} />
+        <Route path="/calendar" element={<MyCalendar />} />
+        <Route path="/createevent" element={<CreateEvent />} />
+        <Route path="/newinput" element={<NewInput />} />
         <Route path="/user" element={<User />} />
         <Route path="/adddata" element={<AddData />} />
       </Routes>
