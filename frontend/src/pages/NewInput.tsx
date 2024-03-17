@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import Navbar from '../components/navbar/Navbar'
 import waves from '../wickedbackground.svg'
 
 function NewInput() {
   const [user, setUser] = useState(null);
+  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,6 +29,43 @@ function NewInput() {
     fetchData();
   }, []);
 
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    try {
+      const jsonData = await file.text();
+      const parsedData = JSON.parse(jsonData);
+
+      // Send the parsed data to your server to handle the import process
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(parsedData)
+      });
+
+      if (response.ok) {
+        console.log('Import successful');
+      } else {
+        console.log('Error:', response.status);
+      }
+    } catch (error) {
+      console.log('Error:', error);
+    }
+  };
+
   return (
     <div className="h-screen bg-white flex flex-col items-center justify-center px-6 relative">
       <img src={waves} alt="Waves" className="absolute bottom-0 left-0 w-full h-full" />
@@ -41,7 +79,13 @@ function NewInput() {
           <button onClick={() => {window.location.href = "/adddata"}} className="w-64 py-7 px-11 bg-blue-500 text-white font-bold rounded-lg text-2xl">
             Manual Input
           </button>
-          <button className="w-64 py-7 px-11 bg-blue-500 text-white font-bold rounded-lg text-2xl">
+          <input
+              type="file"
+              accept=".json"
+              id="import-input"
+              onChange={handleFileChange}
+            />
+          <button onClick={handleImport} className="w-64 py-7 px-11 bg-blue-500 text-white font-bold rounded-lg text-2xl">
             Import
           </button>
         </div>

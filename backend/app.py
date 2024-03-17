@@ -527,6 +527,17 @@ def getRangeGraph():
         "graph": "data:image/png;base64," + img_data
     }})
 
+@app.route("/import", methods=["POST"])
+@jwt_required()
+def import_data():
+    email = get_jwt_identity()
+    data = request.get_json()
+    for entry in data[email]:
+        consumption_data.insert_one(entry)
+
+    return jsonify({"success": True, "status": "success", "message": "Data imported successfully"})
+
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
