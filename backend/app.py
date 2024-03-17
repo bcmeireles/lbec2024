@@ -7,6 +7,9 @@ from flask_jwt_extended import create_access_token,get_jwt,get_jwt_identity, \
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 from flask_cors import CORS
+import plotly.graph_objects as go
+import base64
+from io import BytesIO
 
 app = Flask(__name__)
 CORS(app)
@@ -20,6 +23,8 @@ calendar_data = main_db['calendar_data']
 
 app.config["JWT_SECRET_KEY"] = "do-not-want-to-change"
 jwt = JWTManager(app)
+
+ESSENTIAL_ENERGY = 10 # kWh per 8h
 
 @app.after_request
 def refresh_expiring_jwts(response):
@@ -83,7 +88,6 @@ def login():
 
     user = users.find_one({'email': email})
 
-    print(user)
     if not user or not check_password_hash(user['hashed_password'], password):
         return jsonify({'success': False, 'status': "failed", 'message': 'Invalid email or password'})
 
@@ -187,8 +191,6 @@ def add_event():
     email = get_jwt_identity()
     data = request.get_json()
 
-    print(data)
-
     if not data:
         return jsonify({'error': 'Missing fields'}), 400
     
@@ -226,6 +228,284 @@ def delete_event():
     })
 
     return jsonify({"success": True, "status": "success", "message": "Event deleted successfully"})
+
+def getUserDict(email):
+    user = users.find_one({'email': email})
+    return {
+        "gas_price": user['gas_price'],
+        "electricity_price": user['electricity_price'],
+        "water_price": user['water_price'],
+        "min_house_temp": user['min_house_temp'],
+        "max_house_temp": user['max_house_temp'],
+        "enable_notifications": user['enable_notifications'],
+        "notifications_default_timing": user['notifications_default_timing']
+    }
+
+def getDayMorningUsage(email, date):
+    day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Morning'})
+    return [day_data["gas"], day_data["electricity"], day_data["water"]]
+
+def getIdealDayMorningUsage(email, date):
+    day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Morning'})
+    if day_data["atHome"]:
+        return [day_data["gas"], day_data["electricity"], day_data["water"]]
+    else:
+        return [0, ESSENTIAL_ENERGY, 0]
+
+def getDayAfternoonUsage(email, date):
+    day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Afternoon'})
+    if day_data["atHome"]:
+        return [day_data["gas"], day_data["electricity"], day_data["water"]]
+    else:
+        return [0, ESSENTIAL_ENERGY, 0]
+
+def getDayNightUsage(email, date):
+    day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Night'})
+    if day_data["atHome"]:
+        return [day_data["gas"], day_data["electricity"], day_data["water"]]
+    else:
+        return [0, ESSENTIAL_ENERGY, 0]
+
+def getDayUsage(email, date):
+    day_data = consumption_data.find({'email': email, 'date': date})
+    day_gas = 0
+    day_electricity = 0
+    day_water = 0
+    for data in day_data:
+        day_gas += data["gas"]
+        day_electricity += data["electricity"]
+        day_water += data["water"]
+    return [day_gas, day_electricity, day_water]
+
+def getRangeUsage(email, start, end):
+    start_date = datetime.strptime(start, "%Y-%m-%d")
+    end_date = datetime.strptime(end, "%Y-%m-%d")
+
+    date_list = []
+    gas_usage = []
+    electricity_usage = []
+    water_usage = []
+
+    current_date = start_date.date()  # convert to date object to remove time
+    while current_date <= end_date.date():  # convert to date object to remove time
+        usage = getDayUsage(email, str(current_date))
+        if usage:
+            gas_usage.append(usage[0])
+            electricity_usage.append(usage[1])
+            water_usage.append(usage[2])
+        else:
+            gas_usage.append(None)
+            electricity_usage.append(None)
+            water_usage.append(None)
+        current_date += timedelta(days=1)
+
+    return [sum(gas_usage), sum(electricity_usage), sum(water_usage)]
+
+def getUserCosts(email):
+    user = users.find_one({'email': email})
+    return [user['gas_price'], user['electricity_price'], user['water_price']]
+
+def getDayIdealUsage(email, date):
+    day_data = consumption_data.find({'email': email, 'date': date})
+    ideal_day_gas = 0
+    ideal_day_electricity = 0
+    ideal_day_water = 0
+    for data in day_data:
+        if data["atHome"]:
+            ideal_day_gas += data["gas"]
+            ideal_day_electricity += data["electricity"]
+            ideal_day_water += data["water"]
+        else:
+            ideal_day_electricity += ESSENTIAL_ENERGY
+
+    return [ideal_day_gas, ideal_day_electricity, ideal_day_water]
+
+def getRangeIdealUse(email, start, end):
+    start_date = datetime.strptime(start, "%Y-%m-%d")
+    end_date = datetime.strptime(end, "%Y-%m-%d")
+
+    date_list = []
+    gas_usage = []
+    electricity_usage = []
+    water_usage = []
+
+    current_date = start_date.date()  # convert to date object to remove time
+    while current_date <= end_date.date():  # convert to date object to remove time
+        usage = getDayIdealUsage(email, str(current_date))
+        if usage:
+            gas_usage.append(usage[0])
+            electricity_usage.append(usage[1])
+            water_usage.append(usage[2])
+        else:
+            gas_usage.append(None)
+            electricity_usage.append(None)
+            water_usage.append(None)
+        current_date += timedelta(days=1)
+
+    return [sum(gas_usage), sum(electricity_usage), sum(water_usage)]
+
+@app.route("/daygraph", methods=["POST"])
+@jwt_required()
+def getDayGraph():
+    data = request.get_json()
+    email = get_jwt_identity()
+    date = data['date']
+
+    morning_usage = getDayMorningUsage(email, date)
+    afternoon_usage = getDayAfternoonUsage(email, date)
+    night_usage = getDayNightUsage(email, date)
+
+
+
+    timeslots = ['Morning', 'Afternoon', 'Night']
+
+    fig = go.Figure()
+
+    # Gas line (green)
+    fig.add_trace(go.Scatter(x=timeslots, y=[morning_usage[0], afternoon_usage[0], night_usage[0]], mode='lines', name='Gas', line=dict(color='green')))
+
+    # Electricity line (yellow)
+    fig.add_trace(go.Scatter(x=timeslots, y=[morning_usage[1], afternoon_usage[1], night_usage[1]], mode='lines', name='Electricity', line=dict(color='yellow')))
+
+    # Water line (blue)
+    fig.add_trace(go.Scatter(x=timeslots, y=[morning_usage[2], afternoon_usage[2], night_usage[2]], mode='lines', name='Water', line=dict(color='blue')))
+
+    ideal_morning_usage = getIdealDayMorningUsage(email, date)
+    ideal_afternoon_usage = getDayAfternoonUsage(email, date)
+    ideal_night_usage = getDayNightUsage(email, date)
+
+    # Ideal gas line (dashed green)
+    fig.add_trace(go.Scatter(x=timeslots, y=[ideal_morning_usage[0], ideal_afternoon_usage[0], ideal_night_usage[0]], mode='lines', name='Ideal Gas', line=dict(color='green', dash='dash')))
+    # Ideal electricity line (dashed yellow)
+    fig.add_trace(go.Scatter(x=timeslots, y=[ideal_morning_usage[1], ideal_afternoon_usage[1], ideal_night_usage[1]], mode='lines', name='Ideal Electricity', line=dict(color='yellow', dash='dash')))
+    # Ideal water line (dashed blue)
+    fig.add_trace(go.Scatter(x=timeslots, y=[ideal_morning_usage[2], ideal_afternoon_usage[2], ideal_night_usage[2]], mode='lines', name='Ideal Water', line=dict(color='blue', dash='dash')))
+
+    fig.update_layout(
+        title='Usage by Time of Day',
+        xaxis_title='Time of Day',
+        yaxis_title='Usage',
+        paper_bgcolor='rgba(255,255,255,0.5)',
+        plot_bgcolor='rgba(255,255,255,0.5)'
+    )
+
+    fig.write_image("fig1.png")
+
+    buf = BytesIO()
+    fig.write_image(buf, format='png')
+    # Get the base64 encoded image data
+    img_data = base64.b64encode(buf.getvalue()).decode('utf-8')
+
+    total_usage = getDayUsage(email, date)
+    total_costs = [total_usage[0] * getUserCosts(email)[0], total_usage[1] * getUserCosts(email)[1], total_usage[2] * getUserCosts(email)[2]]
+
+    return jsonify({"success": True, "status": "success", "data": {
+        "total_usage": {
+            "gas": total_usage[0],
+            "electricity": total_usage[1],
+            "water": total_usage[2]
+        },
+        "total_costs": {
+            "gas": total_costs[0],
+            "electricity": total_costs[1],
+            "water": total_costs[2]
+        },
+        "graph": "data:image/png;base64," + img_data
+    }})
+
+@app.route("/rangegraph", methods=["GET"])
+@jwt_required()
+def getRangeGraph():
+    data = request.get_json()
+    email = get_jwt_identity()
+    start = data['start']
+    end = data['end']
+
+    start_date = datetime.strptime(start, "%Y-%m-%d")
+    end_date = datetime.strptime(end, "%Y-%m-%d")
+
+    date_list = []
+    gas_usage = []
+    ideal_gas_usage = []
+    electricity_usage = []
+    ideal_electricity_usage = []
+    water_usage = []
+    ideal_water_usage = []
+
+    current_date = start_date.date()  # convert to date object to remove time
+    while current_date <= end_date.date():  # convert to date object to remove time
+        date_list.append(str(current_date))  # convert date object to string
+        usage = getDayUsage(email, str(current_date))
+        ideal_usage = getDayIdealUsage(email, str(current_date))
+        if usage:
+            gas_usage.append(usage[0])
+            electricity_usage.append(usage[1])
+            water_usage.append(usage[2])
+        else:
+            gas_usage.append(None)
+            electricity_usage.append(None)
+            water_usage.append(None)
+
+        if ideal_usage:
+            ideal_gas_usage.append(ideal_usage[0])
+            ideal_electricity_usage.append(ideal_usage[1])
+            ideal_water_usage.append(ideal_usage[2])
+        else:
+            ideal_gas_usage.append(None)
+            ideal_electricity_usage.append(None)
+            ideal_water_usage.append(None)
+
+        current_date += timedelta(days=1)
+
+    fig = go.Figure()
+
+    # Gas line (green)
+    fig.add_trace(go.Scatter(x=date_list, y=gas_usage, mode='lines', name='Gas', line=dict(color='green')))
+
+    # Electricity line (yellow)
+    fig.add_trace(go.Scatter(x=date_list, y=electricity_usage, mode='lines', name='Electricity', line=dict(color='yellow')))
+
+    # Water line (blue)
+    fig.add_trace(go.Scatter(x=date_list, y=water_usage, mode='lines', name='Water', line=dict(color='blue')))
+
+    # Ideal gas line (dashed green)
+    fig.add_trace(go.Scatter(x=date_list, y=ideal_gas_usage, mode='lines', name='Ideal Gas', line=dict(color='green', dash='dash')))
+    # Ideal electricity line (dashed yellow)
+    fig.add_trace(go.Scatter(x=date_list, y=ideal_electricity_usage, mode='lines', name='Ideal Electricity', line=dict(color='yellow', dash='dash')))
+    # Ideal water line (dashed blue)
+    fig.add_trace(go.Scatter(x=date_list, y=ideal_water_usage, mode='lines', name='Ideal Water', line=dict(color='blue', dash='dash')))
+
+
+    fig.update_layout(
+        title='Usage from ' + start + ' to ' + end,
+        xaxis_title='Date',
+        yaxis_title='Usage',
+    )
+
+    fig.write_image("fig2.png")
+
+    buf = BytesIO()
+    fig.write_image(buf, format='png')
+    # Get the base64 encoded image data
+    img_data = base64.b64encode(buf.getvalue()).decode('utf-8')
+
+    total_usage = getRangeUsage(email, start, end)
+    total_costs = [total_usage[0] * getUserCosts(email)[0], total_usage[1] * getUserCosts(email)[1], total_usage[2] * getUserCosts(email)[2]]
+
+    return jsonify({"success": True, "status": "success", "data": {
+        "total_usage": {
+            "gas": total_usage[0],
+            "electricity": total_usage[1],
+            "water": total_usage[2]
+        },
+        "total_costs": {
+            "gas": total_costs[0],
+            "electricity": total_costs[1],
+            "water": total_costs[2]
+        },
+        "graph": "data:image/png;base64," + img_data
+    }})
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
