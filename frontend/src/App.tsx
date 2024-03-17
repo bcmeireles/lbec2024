@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import OverviewDay from './pages/OverviewDay';
+import OverviewRange from './pages/OverviewRange';
 import MyCalendar from './pages/calendar/MyCalendar';
 import AddData from './pages/AddData';
 import User from './pages/User';
@@ -17,6 +18,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<h1>Home Page</h1>} />
         <Route path="/overview" element={<OverviewDay />} />
+        <Route path="/range" element={<OverviewRange />} />
         <Route path="/calendar" element={<MyCalendar />} />
         <Route path="/createevent" element={<CreateEvent />} />
         <Route path="/newinput" element={<NewInput />} />

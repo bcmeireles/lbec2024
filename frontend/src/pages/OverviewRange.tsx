@@ -14,25 +14,25 @@ type Usage = {
   water: number;
 };
 
-function OverviewDay() {
+function OverviewRange() {
 
   const [graphData, setGraphData] = useState("");
-
   const [totalCosts, setTotalCosts] = useState<Costs>({ electricity: 0, gas: 0, water: 0 });
   const [totalUsage, setTotalUsage] = useState<Usage>({ electricity: 0, gas: 0, water: 0 });
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
 
-
-  useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/daygraph', {
+      const response = await fetch('http://localhost:5000/rangegraph', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          "date": new Date().toISOString().split('T')[0]
+          "start": startDate.toISOString().split('T')[0],
+          "end": endDate.toISOString().split('T')[0]
           // "date": "2024-01-01"
         })
       });
@@ -46,10 +46,8 @@ function OverviewDay() {
       } else {
         console.log('Error:', response.status);
       }
-    };
-
-    fetchData();
-  }, []);
+    
+    }
 
   
 
@@ -60,10 +58,17 @@ function OverviewDay() {
         <Navbar selected={1}/>
         
         <div className="-mt-36">
-          <h1 className="text-4xl font-bold text-center">Overview</h1>
-          <h2 className="text-3xl font-bold text-center mt-16 mb-8">Today's Usage</h2>
+          <h1 className="text-4xl font-bold text-center mt-16 mb-8">Overview</h1>
 
-          <img src={graphData} alt="Graph" />
+          <div className="flex flex-col items-center space-y-4">
+            <div className="flex space-x-8">
+              <input type="date" value={startDate.toISOString().split('T')[0]} onChange={(e) => setStartDate(new Date(e.target.value))} />
+              <input type="date" value={endDate.toISOString().split('T')[0]} onChange={(e) => setEndDate(new Date(e.target.value))} />
+            </div>
+            <input type="button" value="Submit" className="py-2 px-3 bg-blue-500 text-white rounded-lg font-bold" onClick={fetchData}/>
+          </div>
+
+          <img src={graphData} className="mt-16" alt="Graph" />
 
           <div className="flex space-x-16 mt-16">
             <div className="flex flex-col items-center space-y-2">
@@ -83,7 +88,7 @@ function OverviewDay() {
             </div>
           </div>
           <div className="flex flex-col items-center">
-            <button onClick={() => window.location.href = "/range"} className="py-4 px-11 bg-blue-500 text-white rounded-lg mt-12 font-bold">Range View</button>
+            <button onClick={() => window.location.href = "/range"} className="py-4 px-11 bg-blue-500 text-white rounded-lg mt-12 font-bold">Day View</button>
           </div>
         </div>
       </div>
@@ -92,4 +97,4 @@ function OverviewDay() {
 
 }
 
-export default OverviewDay
+export default OverviewRange

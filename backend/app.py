@@ -432,7 +432,7 @@ def getDayGraph():
         "graph": "data:image/png;base64," + img_data
     }})
 
-@app.route("/rangegraph", methods=["GET"])
+@app.route("/rangegraph", methods=["POST"])
 @jwt_required()
 def getRangeGraph():
     data = request.get_json()
