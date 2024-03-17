@@ -230,27 +230,29 @@ def aux_getUsageWeek(email, date):
     eletricity = 0
     water = 0
     inHouseEletricity = 0
+    inhousewater = 0
+    inhousegas = 0
     for x in week_data:
         gas += x['gas']
         eletricity += x['eletricity']
         water += x['water']
         inhousetempchange += x['usefulTempChange']
-        inHouseEletricity += x['inHouseEletricity']
-        inHouseGas += x['inHouseGas']
-        inHouseWater += x['inHouseWater']
+        inhouseeletricity += x['inhouseletricity']
+        inhouseGas += x['inhouseGas']
+        inhouseWater += x['inhouseWater']
         tempChange += x['tempChange']
     
-    week_struct = {
+    wek_struct = {
         'email': email,
         'date': date,
         'gas': gas,
         'eletricity': eletricity,
         'water': water,
         'tempChange': tempChange,
-        'inhousegas' : inHouseGas,
-        'inhousewater' : inHouseWater,
+        'inhousegas' : inhouseGas,
+        'inhousewater' : inhouseWater,
         'usefultempchange': inhousetempchange,
-        'inhouseeletricity': inHouseEletricity
+        'inhouseletricity': inhouseletricity
     }
     
     return week_struct
@@ -264,11 +266,12 @@ def getPriceWeek(email,date):
 def aux_getUsageMonth(email, date):
     inhousetempchange = 0
     tempChange = 0
-    user_temp = getPreferedTemperature(email)
     gas = 0
     eletricity = 0
     water = 0
-    inHouseEletricity = 0
+    inhouseeletricity = 0
+    inhousewater = 0
+    inhousegas = 0
     
     date = datetime.strptime(date, "%Y-%m-%d") if isinstance(date, str) else date
     
@@ -287,9 +290,11 @@ def aux_getUsageMonth(email, date):
         gas += month_data.gas
         eletricity += month_data.eletricity
         water += month_data.water
-        inhousetempchange += x['usefulTempChange']
+        inhousetempchange += x['inhousetempchange']
         tempChange += x['tempChange']
-        inHouseEletricity += x['inHouseEletricity']
+        inhouseeletricity += x['inhouseeletricity']
+        inhousewater += x['inhousewater']
+        inhousegas += x['inhousegas']
     
     month_struct = {
         'email': email,
@@ -299,7 +304,9 @@ def aux_getUsageMonth(email, date):
         'water': water,
         'tempChange': tempChange,
         'usefulTempChange': inhousetempchange,
-        'inHouseEletricity': inHouseEletricity
+        'inhouseeletricity': inhouseeletricity,
+        'inhousewater': inhousewater,
+        'inhousegas': inhousegas
     }
     
     return month_struct
@@ -310,7 +317,7 @@ def getPriceMonth(email,date):
     
 def getIdealUsage(email, date):
     aux_data = aux_getUsageMonth(email,date)
-    return aux_data['usefulTempChange']*0.03*0.46 + aux_data['inHouseEletricity']*0.15
+    return aux_data['usefulTempChange']*0.03*0.46 + aux_data['inhouseEletricity']*0.15
 
 def getIdealPrice(email, date):
     usage = getIdealUsage(email, date)
@@ -419,7 +426,6 @@ def getMonthGraph(email, date):
         dayList.append(str(i))
         i += 1
         month_data.append(aux_getUsageDay(email, date))
-    l_temperature = []
     for x in month_data:
         l_energy.append(x['energy'])
         l_water.append(x['water']) 
@@ -448,6 +454,20 @@ def getIdealGraph(email, date):
     fig = go.Figure(data=[go.Pie(labels=label, values=usages, marker_colors = colors)])
     
 
+@app.route('CCCCCCCCCC', methods=['GET'])
+def monthClicked(email, date):
+    usage = aux_getUsageDay(email,date)
+    cost = getPriceDay(email, date)
+    data = {
+        'graph' : getDayGraph(email, date),
+        'cost' : cost ,
+        'wastedgas' : usage['gas'] - usage['inhousegas'],
+        'wastedwater' : usage['water'] - usage['inhousewater'],
+        'wastedenergy' : (usage['eletricity'] - usage['inhouseeletricity']) * 0.85 + (usage['tempchange'] - usage['inhousetempchange']) * 0.03 * 0.46,
+        'wastedmoney' : cost - getIdealPrice(email,date)
+    }
+    return jsonify(data)
+
 @app.route('AAAAAAAAAAAAAAAAAAAAAAA', methods=['GET'])
 def weekClicked(email, date):
     usage = aux_getUsageWeek(email,date)
@@ -464,8 +484,8 @@ def weekClicked(email, date):
 
 @app.route('BBBBBBBBBBBBBBBBBB', methods=['GET'])
 def monthClicked(email, date):
-    usage = aux_getUsageWeek(email,date)
-    cost = getPriceWeek(email, date)
+    usage = aux_getUsageMonth(email,date)
+    cost = getPriceMonth(email, date)
     data = {
         'graph' : getMonthGraph(email, date),
         'cost' : cost ,
