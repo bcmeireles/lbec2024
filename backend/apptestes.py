@@ -199,7 +199,7 @@ def getPriceDay(email, date):
 
 def getIdealPriceDay(email, date):
     idealDay = getIdealDay(email,date)
-    return idealDay['water'] * getPriceWater(email) + idealDay['gas'] * getPriceGas(email) + idealDay['electricity'] * getPriceElectricity(email)
+    return idealDay['water'] * getWaterPrice(email) + idealDay['gas'] * getGasPrice(email) + idealDay['electricity'] * getElecPrice(email)
 
 def getWastedDay(email, date):
     answer = {'Water': 0, 'Electricity': 0, 'Gas': 0}
