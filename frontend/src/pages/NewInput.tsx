@@ -98,9 +98,13 @@ function NewInput() {
           <h1 className="text-4xl font-bold text-center">Welcome, {user}</h1>
           <h2 className="text-3xl font-bold text-center mt-16">New Input</h2>
         </div>
-        <div className="flex flex-col items-center mt-32 space-y-16">
+        <div className="flex flex-col items-center mt-32 space-y-8">
           <button onClick={() => {window.location.href = "/adddata"}} className="w-64 py-7 px-11 bg-blue-500 text-white font-bold rounded-lg text-2xl">
             Manual Input
+          </button>
+          
+          <button onClick={handleImport} className="w-64 py-7 px-11 bg-blue-500 text-white font-bold rounded-lg text-xl">
+            Import <br />(upload below)
           </button>
           <input
               type="file"
@@ -108,9 +112,6 @@ function NewInput() {
               id="import-input"
               onChange={handleFileChange}
             />
-          <button onClick={handleImport} className="w-64 py-7 px-11 bg-blue-500 text-white font-bold rounded-lg text-2xl">
-            Import
-          </button>
           <button onClick={handleExportClick} className="w-64 py-7 px-11 bg-blue-500 text-white font-bold rounded-lg text-2xl">
             Export
           </button>
