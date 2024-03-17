@@ -16,30 +16,51 @@ const CreateEvent: React.FC = () => {
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [events, setEvents] = useState<Event[]>([]);
 
-  const handleCreateEvent = () => {
+  const handleCreateEvent = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (title && startDate && endDate) {
-      setEvents([...events, { title, start: startDate, end: endDate }]);
-      setTitle('');
-      setStartDate(null);
-      setEndDate(null);
+      console.log('Creating event');
+      const token = localStorage.getItem('token');
+      fetch('http://localhost:5000/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: title,
+          start: moment(startDate).format(),
+          end: moment(endDate).format()
+        })
+      }).then((response) => {
+        if (response.ok) {
+          console.log("Form submitted successfully");
+        } else {
+          console.log("Error:", response.status);
+        }
+      });
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name === 'title') {
+      setTitle(value);
     }
   };
 
   return (
-    <div className="h-screen bg-white flex flex-col items-center justify-center px-6 relative">
+    <div className="h-screen bg-white flex flex-col items-center justify-center px-24 relative">
       <img src={waves} alt="Waves" className="absolute bottom-0 left-0 w-full h-full" />
       <div className="z-10 relative w-full space-y-4">
         <Navbar selected={2} />
         <h1 className="text-3xl font-bold text-center mb-8">Create New Event</h1>
-        <div className="bg-white border rounded-lg p-2 space-y-4">
-          <input
-            type="text"
-            placeholder="Event title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+        <form onSubmit={handleCreateEvent} className="space-y-4">
+          <div className="border p-4 rounded bg-white">
+            <label htmlFor="title" className="block font-bold mb-2 text-center border-b-2">Event Title</label>
+            <input type="text" name="title" id="title" value={title} onChange={handleInputChange} className="w-full text-center border" />
+          </div>
           <div className="datepicker-container space-y-4">
             <DatePicker
               selected={startDate}
@@ -49,6 +70,7 @@ const CreateEvent: React.FC = () => {
               timeIntervals={15}
               dateFormat="MMMM d, yyyy h:mm aa"
               placeholderText="Start date and time"
+              className="rounded-md text-center"
             />
             <DatePicker
               selected={endDate}
@@ -58,12 +80,13 @@ const CreateEvent: React.FC = () => {
               timeIntervals={15}
               dateFormat="MMMM d, yyyy h:mm aa"
               placeholderText="End date and time"
+              className="rounded-md text-center"
             />
           </div>
-        </div>
-        <div className="flex justify-center mt-8">
-          <button onClick={handleCreateEvent} className="py-2 px-11 bg-blue-500 text-white rounded-lg font-bold">Create Event</button>
-        </div>
+          <div className="flex justify-center mt-4">
+            <button type="submit" className="py-2 px-11 bg-blue-500 text-white rounded-lg font-bold">Create Event</button>
+          </div>
+        </form>
       </div>
     </div>
   );
