@@ -1,1 +1,6 @@
-pymongo==4.6.1
+pymongo
+PyJWT
+Werkzeug
+Flask-JWT-Extended
+plotly
+kaleido
