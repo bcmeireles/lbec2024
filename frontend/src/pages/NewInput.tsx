@@ -1,19 +1,39 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/navbar/Navbar'
 import waves from '../wickedbackground.svg'
 
-interface Props {
-  name: string;
-}
+function NewInput() {
+  const [user, setUser] = useState(null);
 
-function NewInput({ name }: Props) {
+  useEffect(() => {
+    const fetchData = async () => {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/profile', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.data);
+      } else {
+        console.log('Error:', response.status);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <div className="h-screen bg-white flex flex-col items-center justify-center px-6 relative">
       <img src={waves} alt="Waves" className="absolute bottom-0 left-0 w-full h-full" />
       <div className="z-10 relative w-full">
         <Navbar selected={3}/>
         <div className="-mt-36">
-          <h1 className="text-4xl font-bold text-center">Welcome, {name}</h1>
+          <h1 className="text-4xl font-bold text-center">Welcome, {user}</h1>
           <h2 className="text-3xl font-bold text-center mt-16">New Input</h2>
         </div>
         <div className="flex flex-col items-center mt-32 space-y-16">
