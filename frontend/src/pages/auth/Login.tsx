@@ -38,7 +38,7 @@ const Login: React.FC = () => {
           // Handle successful login (e.g. store the JWT token in local storage and redirect to the dashboard)
           console.log("logged in");
           localStorage.setItem('token', data.token);
-          window.location.href = '/dashboard';
+          window.location.href = '/overview';
         } else {
           setError(data.message);
         }
