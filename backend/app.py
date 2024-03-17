@@ -24,8 +24,6 @@ calendar_data = main_db['calendar_data']
 app.config["JWT_SECRET_KEY"] = "do-not-want-to-change"
 jwt = JWTManager(app)
 
-ESSENTIAL_ENERGY = 10 # kWh per 8h
-
 @app.after_request
 def refresh_expiring_jwts(response):
     try:
@@ -247,15 +245,14 @@ def getDayMorningUsage(email, date):
         return [0, 0, 0]
     return [day_data["gas"], day_data["electricity"], day_data["water"]]
         
-
 def getIdealDayMorningUsage(email, date):
     day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Morning'})
     if not day_data:
-        return [0, ESSENTIAL_ENERGY, 0]
+        return [0, getMinimumElectricity(email), 0]
     if day_data["atHome"]:
         return [day_data["gas"], day_data["electricity"], day_data["water"]]
     else:
-        return [0, ESSENTIAL_ENERGY, 0]
+        return [0, getMinimumElectricity(email), 0]
 
 def getDayAfternoonUsage(email, date):
     day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Afternoon'})
@@ -266,11 +263,11 @@ def getDayAfternoonUsage(email, date):
 def getIdealDayAfternoonUsage(email, date):
     day_data =consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Afternoon'})
     if not day_data:
-        return [0, ESSENTIAL_ENERGY, 0]
+        return [0, getMinimumElectricity(email), 0]
     if day_data["atHome"]:
         return [day_data["gas"], day_data["electricity"], day_data["water"]]
     else:
-        return [0, ESSENTIAL_ENERGY, 0]
+        return [0, getMinimumElectricity(email), 0]
 
 def getDayNightUsage(email, date):
     day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Night'})
@@ -281,11 +278,11 @@ def getDayNightUsage(email, date):
 def getIdealDayNightUsage(email, date):
     day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Night'})
     if not day_data:
-        return [0, ESSENTIAL_ENERGY, 0]
+        return [0, getMinimumElectricity(email), 0]
     if day_data["atHome"]:
         return [day_data["gas"], day_data["electricity"], day_data["water"]]
     else:
-        return [0, ESSENTIAL_ENERGY, 0]
+        return [0, getMinimumElectricity(email), 0]
 
 def getDayUsage(email, date):
     day_data = consumption_data.find({'email': email, 'date': date})
@@ -337,7 +334,7 @@ def getDayIdealUsage(email, date):
             ideal_day_electricity += data["electricity"]
             ideal_day_water += data["water"]
         else:
-            ideal_day_electricity += ESSENTIAL_ENERGY
+            ideal_day_electricity += getMinimumElectricity(email)
 
     return [ideal_day_gas, ideal_day_electricity, ideal_day_water]
 
@@ -364,6 +361,17 @@ def getRangeIdealUse(email, start, end):
         current_date += timedelta(days=1)
 
     return [sum(gas_usage), sum(electricity_usage), sum(water_usage)]
+
+def getMinimumElectricity(email):
+    athome_data = consumption_data.find({'atHome': True,'email': email})
+    averageElectricity = 0
+    l_atHome = []
+    
+    for data in athome_data:
+        l_atHome.append(data['electricity'])
+    averageElectricity = sum(l_atHome) / len(l_atHome)
+    
+    return averageElectricity * 0.85
 
 @app.route("/daygraph", methods=["POST"])
 @jwt_required()
