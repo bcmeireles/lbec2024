@@ -14,6 +14,8 @@ function AddData() {
       water: 0,
       temperature: 0,
       atHome: false,
+      date: '',
+      timeslot: 'Morning',
     },
     Afternoon: {
       gas: 0,
@@ -21,6 +23,8 @@ function AddData() {
       water: 0,
       temperature: 0,
       atHome: false,
+      date: '',
+      timeslot: 'Afternoon',
     },
     Night: {
       gas: 0,
@@ -28,6 +32,8 @@ function AddData() {
       water: 0,
       temperature: 0,
       atHome: false,
+      date: '',
+      timeslot: 'Night',
     },
   });
 
@@ -40,6 +46,8 @@ function AddData() {
     // Send 3 requests, one for each form
     console.log('Submitting all forms');
   };
+
+  
 
   return (
     <div className="h-screen bg-white flex flex-col items-center justify-center px-6 relative">

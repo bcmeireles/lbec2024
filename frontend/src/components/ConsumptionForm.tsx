@@ -15,6 +15,8 @@ export interface State {
   water: number;
   temperature: number;
   atHome: boolean;
+  date: string;
+  timeslot: 'Morning' | 'Afternoon' | 'Night';
 }
 
 class ConsumptionForm extends React.Component<Props, State> {
@@ -26,15 +28,30 @@ class ConsumptionForm extends React.Component<Props, State> {
   handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const newValue = name === 'atHome' ? e.target.checked : parseFloat(value);
-    this.props.setForm((prevForms) => ({
-      ...prevForms,
-      [this.props.selectedForm]: { ...prevForms[this.props.selectedForm], [name]: newValue },
-    }));
+  
+    if (name === 'date') {
+      const newDate = new Date(value);
+      this.props.setDate(newDate);
+      this.props.setForm((prevForms) => {
+        const newForms = { ...prevForms };
+        for (const formKey in newForms) {
+          newForms[formKey] = { ...newForms[formKey], date: newDate.toISOString().split('T')[0] };
+        }
+        return newForms;
+      });
+    } else {
+      this.props.setForm((prevForms) => ({
+        ...prevForms,
+        [this.props.selectedForm]: { ...prevForms[this.props.selectedForm], [name]: newValue },
+      }));
+    }
   };
+  
+  
 
   handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // this.props.onSubmit(form);
+    console.log("Submitting " + this.props.selectedForm + " form: " + JSON.stringify(this.props.form));
   };
 
   render() {
@@ -57,7 +74,7 @@ class ConsumptionForm extends React.Component<Props, State> {
           <span className="ml-2 w-16 text-right">L</span>
         </div>
         <div className="flex items-center justify-between border p-4 rounded bg-white">
-          <label htmlFor="temperature" className="w-24 font-bold">Temperature</label>
+          <label htmlFor="temperature" className="w-24 font-bold">Outside Temperature</label>
           <input type="number" name="temperature" id="temperature" value={form.temperature} onChange={this.handleInputChange} className="flex-1 ml-2 text-right" />
           <span className="ml-2 w-16 text-right">°C</span>
         </div>
@@ -78,7 +95,10 @@ class ConsumptionForm extends React.Component<Props, State> {
             name="date"
             id="date"
             value={date ? date.toISOString().split('T')[0] : ''}
-            onChange={(e) => setDate(new Date(e.target.value))}
+            onChange={(e) => {
+                setDate(new Date(e.target.value));
+                this.handleInputChange(e);
+            }}
             className="flex-1 ml-2 text-right"
         />
         </div>
