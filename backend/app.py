@@ -107,8 +107,9 @@ def my_profile():
     
     # get the user from the database
     user = users.find_one({'email': email})
+    user['_id'] = str(user['_id'])
 
-    return jsonify({"status": "success", "data": user["name"]})
+    return jsonify({"status": "success", "data": user})
 
 @app.route("/settings", methods=["GET"])
 @jwt_required()
@@ -176,7 +177,7 @@ def get_events():
     returning = []
     for event in events:
         del event['email']
-        del event['_id']
+        event['_id'] = str(event['_id'])
         returning.append(event)
     return jsonify({"success": True, "status": "success", "data": returning})
 
@@ -186,20 +187,45 @@ def add_event():
     email = get_jwt_identity()
     data = request.get_json()
 
+    print(data)
+
     if not data:
         return jsonify({'error': 'Missing fields'}), 400
     
-    if not all(x in data.keys() for x in ["title", "start", "end"]):
+    if not all(x in data.keys() for x in ["title", "start", "end", "toNotify", "notifyTiming"]):
         return jsonify({'error': 'Missing fields'}), 400
 
     calendar_data.insert_one({
         "email": email,
         "title": data['title'],
         "start": data['start'],
-        "end": data['end']
+        "end": data['end'],
+        "toNotify": data['toNotify'],
+        "notifyTiming": data['notifyTiming']
     })
 
     return jsonify({"success": True, "status": "success", "message": "Event added successfully"})
+
+@app.route("/events", methods=["DELETE"])
+@jwt_required()
+def delete_event():
+    email = get_jwt_identity()
+    data = request.get_json()
+
+    if not data:
+        return jsonify({'error': 'Missing fields'}), 400
+    
+    if not all(x in data.keys() for x in ["title", "start", "end"]):
+        return jsonify({'error': 'Missing fields'}), 400
+
+    calendar_data.delete_one({
+        "email": email,
+        "title": data['title'],
+        "start": data['start'],
+        "end": data['end']
+    })
+
+    return jsonify({"success": True, "status": "success", "message": "Event deleted successfully"})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
