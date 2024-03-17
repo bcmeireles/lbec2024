@@ -68,6 +68,7 @@ class ConsumptionForm extends React.Component<Props, State> {
         console.log("Error:", response.status);
       }
     });
+    window.location.href = '/overview';
   };
 
 

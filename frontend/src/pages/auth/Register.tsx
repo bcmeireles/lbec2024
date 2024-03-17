@@ -48,6 +48,8 @@ const Register: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         console.log(data);
+        localStorage.setItem('token', data.token);
+        window.location.href = '/overview';
         // Handle successful registration (e.g. redirect to login page)
       } else {
         const errorData = await response.json();

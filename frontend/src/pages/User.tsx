@@ -19,30 +19,6 @@ function User() {
     timing: 0,
   });
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const result = await axios('http://localhost:5000/settings', {
-  //       method: 'GET',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${localStorage.getItem('token')}` // assuming you're storing the JWT token in localStorage
-  //       }
-  //     });
-
-  //     setForm({
-  //       gas: result.data.data.gas_price,
-  //       electricity: result.data.data.electricity_price,
-  //       water: result.data.data.water_price,
-  //       minTemp: result.data.data.min_house_temp,
-  //       maxTemp: result.data.data.max_house_temp,
-  //       receiveNotifications: result.data.data.enable_notifications,
-  //       timing: result.data.data.notifications_default_timing,
-  //     });
-  //   };
-
-  //   fetchData();
-  // }, []);
-
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('token');
@@ -106,6 +82,7 @@ function User() {
     if (response.ok) {
       const data = await response.json();
       console.log('Settings updated successfully:', data);
+      window.location.href = '/overview';
     } else {
       console.log('Error:', response.status);
     }

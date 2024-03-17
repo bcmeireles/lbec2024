@@ -69,8 +69,8 @@ def register():
         'gas_price': 0,
         'electricity_price': 0,
         'water_price': 0,
-        'min_house_temp': 0,
-        'max_house_temp': 0,
+        'min_house_temp': 18,
+        'max_house_temp': 23,
         'enable_notifications': False,
         'notifications_default_timing': 0
     }

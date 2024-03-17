@@ -38,6 +38,7 @@ function NewInput() {
   const handleImport = async () => {
     if (!file) {
       console.log('No file selected');
+      alert('No file selected');
       return;
     }
 

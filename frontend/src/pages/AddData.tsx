@@ -54,6 +54,7 @@ function AddData() {
         console.log(`Form ${timeslot} submitted`);
       });
     });
+    window.location.href = '/overview';
   };
 
   return (
