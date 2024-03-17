@@ -59,6 +59,7 @@ function NewInput() {
 
       if (response.ok) {
         console.log('Import successful');
+        window.location.href = '/overview';
       } else {
         console.log('Error:', response.status);
       }
