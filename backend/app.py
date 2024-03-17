@@ -10,6 +10,7 @@ from flask_cors import CORS
 import plotly.graph_objects as go
 import base64
 from io import BytesIO
+import statistics
 
 app = Flask(__name__)
 CORS(app)
@@ -369,9 +370,8 @@ def getMinimumElectricity(email):
     
     for data in athome_data:
         l_atHome.append(data['electricity'])
-    averageElectricity = sum(l_atHome) / len(l_atHome)
     
-    return averageElectricity * 0.85
+    return statistics.median(l_atHome) * 0.15
 
 @app.route("/daygraph", methods=["POST"])
 @jwt_required()
