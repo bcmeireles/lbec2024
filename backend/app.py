@@ -243,10 +243,15 @@ def getUserDict(email):
 
 def getDayMorningUsage(email, date):
     day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Morning'})
+    if not day_data:
+        return [0, 0, 0]
     return [day_data["gas"], day_data["electricity"], day_data["water"]]
+        
 
 def getIdealDayMorningUsage(email, date):
     day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Morning'})
+    if not day_data:
+        return [0, ESSENTIAL_ENERGY, 0]
     if day_data["atHome"]:
         return [day_data["gas"], day_data["electricity"], day_data["water"]]
     else:
@@ -254,6 +259,14 @@ def getIdealDayMorningUsage(email, date):
 
 def getDayAfternoonUsage(email, date):
     day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Afternoon'})
+    if not day_data:
+        return [0, 0, 0]
+    return [day_data["gas"], day_data["electricity"], day_data["water"]]
+
+def getIdealDayAfternoonUsage(email, date):
+    day_data =consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Afternoon'})
+    if not day_data:
+        return [0, ESSENTIAL_ENERGY, 0]
     if day_data["atHome"]:
         return [day_data["gas"], day_data["electricity"], day_data["water"]]
     else:
@@ -261,6 +274,14 @@ def getDayAfternoonUsage(email, date):
 
 def getDayNightUsage(email, date):
     day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Night'})
+    if not day_data:
+        return [0, 0, 0]
+    return [day_data["gas"], day_data["electricity"], day_data["water"]]
+
+def getIdealDayNightUsage(email, date):
+    day_data = consumption_data.find_one({'email': email, 'date': date, 'timeslot': 'Night'})
+    if not day_data:
+        return [0, ESSENTIAL_ENERGY, 0]
     if day_data["atHome"]:
         return [day_data["gas"], day_data["electricity"], day_data["water"]]
     else:
@@ -355,8 +376,6 @@ def getDayGraph():
     afternoon_usage = getDayAfternoonUsage(email, date)
     night_usage = getDayNightUsage(email, date)
 
-
-
     timeslots = ['Morning', 'Afternoon', 'Night']
 
     fig = go.Figure()
@@ -371,8 +390,8 @@ def getDayGraph():
     fig.add_trace(go.Scatter(x=timeslots, y=[morning_usage[2], afternoon_usage[2], night_usage[2]], mode='lines', name='Water', line=dict(color='blue')))
 
     ideal_morning_usage = getIdealDayMorningUsage(email, date)
-    ideal_afternoon_usage = getDayAfternoonUsage(email, date)
-    ideal_night_usage = getDayNightUsage(email, date)
+    ideal_afternoon_usage = getIdealDayAfternoonUsage(email, date)
+    ideal_night_usage = getIdealDayNightUsage(email, date)
 
     # Ideal gas line (dashed green)
     fig.add_trace(go.Scatter(x=timeslots, y=[ideal_morning_usage[0], ideal_afternoon_usage[0], ideal_night_usage[0]], mode='lines', name='Ideal Gas', line=dict(color='green', dash='dash')))
@@ -480,6 +499,8 @@ def getRangeGraph():
         title='Usage from ' + start + ' to ' + end,
         xaxis_title='Date',
         yaxis_title='Usage',
+        paper_bgcolor='rgba(255,255,255,0.5)',
+        plot_bgcolor='rgba(255,255,255,0.5)'
     )
 
     fig.write_image("fig2.png")
