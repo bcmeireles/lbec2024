@@ -103,7 +103,7 @@ class ConsumptionForm extends React.Component<Props, State> {
         />
         </div>
         <div className="flex justify-center mt-4">
-            <button type="submit" className="py-2 px-11 bg-blue-500 text-white rounded-lg">Submit</button>
+            <button type="submit" className="py-2 px-11 bg-blue-500 text-white rounded-lg font-bold">Submit</button>
         </div>
       </form>
     );

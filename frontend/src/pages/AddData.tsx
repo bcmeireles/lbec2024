@@ -37,17 +37,10 @@ function AddData() {
     },
   });
 
-  const handleFormSubmit = (formData: any, formName: string) => {
-    // Send POST request to /submit/<formName>
-    console.log('Submitting form:', formName, formData);
-  };
-
   const handleSubmitAll = () => {
     // Send 3 requests, one for each form
     console.log('Submitting all forms');
   };
-
-  
 
   return (
     <div className="h-screen bg-white flex flex-col items-center justify-center px-6 relative">
@@ -74,7 +67,7 @@ function AddData() {
           setForm={setForms}
           selectedForm={selectedForm}
         />
-          <button onClick={handleSubmitAll} className="py-2 px-11 bg-blue-500 text-white rounded-lg mt-4">Submit All</button>
+          <button onClick={handleSubmitAll} className="py-2 px-11 bg-blue-500 text-white rounded-lg mt-4 font-bold">Submit All</button>
         </div>
         <Navbar selected={3} />
       </div>
