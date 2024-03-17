@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Navbar from '../components/navbar/Navbar'
 import waves from '../wickedbackground.svg'
 import Switch from '../components/Switch';
@@ -19,6 +19,60 @@ function User() {
     timing: 0,
   });
 
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const result = await axios('http://localhost:5000/settings', {
+  //       method: 'GET',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${localStorage.getItem('token')}` // assuming you're storing the JWT token in localStorage
+  //       }
+  //     });
+
+  //     setForm({
+  //       gas: result.data.data.gas_price,
+  //       electricity: result.data.data.electricity_price,
+  //       water: result.data.data.water_price,
+  //       minTemp: result.data.data.min_house_temp,
+  //       maxTemp: result.data.data.max_house_temp,
+  //       receiveNotifications: result.data.data.enable_notifications,
+  //       timing: result.data.data.notifications_default_timing,
+  //     });
+  //   };
+
+  //   fetchData();
+  // }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/settings', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setForm({
+          gas: data.data.gas_price,
+          electricity: data.data.electricity_price,
+          water: data.data.water_price,
+          minTemp: data.data.min_house_temp,
+          maxTemp: data.data.max_house_temp,
+          receiveNotifications: data.data.enable_notifications,
+          timing: data.data.notifications_default_timing,
+        });
+      } else {
+        console.log('Error:', response.status);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setForm((prevForm) => ({
@@ -35,10 +89,27 @@ function User() {
     }));
   }
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('Submitting form:', form);
-  }
+  
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:5000/settings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(form)
+    });
+  
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Settings updated successfully:', data);
+    } else {
+      console.log('Error:', response.status);
+    }
+  };
 
   const handleTempChange = (value: number | number[]) => {
     if (Array.isArray(value)) {

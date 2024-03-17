@@ -61,7 +61,13 @@ def register():
         'name': name,
         'email': email,
         'hashed_password': hashed_password,
-        'prefered_temperature': -1000
+        'gas_price': 0,
+        'electricity_price': 0,
+        'water_price': 0,
+        'min_house_temp': 0,
+        'max_house_temp': 0,
+        'enable_notifications': False,
+        'notifications_default_timing': 0
     }
     users.insert_one(new_user)
 
@@ -78,11 +84,11 @@ def login():
 
     print(user)
     if not user or not check_password_hash(user['hashed_password'], password):
-        return jsonify({'status': "failed", 'message': 'Invalid email or password'})
+        return jsonify({'success': False, 'status': "failed", 'message': 'Invalid email or password'})
 
     access_token = create_access_token(identity=email)
 
-    return jsonify({"status": "success", 'token': access_token}), 200
+    return jsonify({"success": True, "status": "success", 'token': access_token}), 200
 
 
 @app.route("/logout", methods=["POST"])
@@ -102,6 +108,40 @@ def my_profile():
     user = users.find_one({'email': email})
 
     return jsonify({"status": "success", "data": str(user)})
+
+@app.route("/settings", methods=["GET"])
+@jwt_required()
+def get_settings():
+    email = get_jwt_identity()
+    user = users.find_one({'email': email})
+    return jsonify({"success": True, "status": "success", "data": {
+        "gas_price": user['gas_price'],
+        "electricity_price": user['electricity_price'],
+        "water_price": user['water_price'],
+        "min_house_temp": user['min_house_temp'],
+        "max_house_temp": user['max_house_temp'],
+        "enable_notifications": user['enable_notifications'],
+        "notifications_default_timing": user['notifications_default_timing']
+    }})
+
+@app.route("/settings", methods=["POST"])
+@jwt_required()
+def update_settings():
+    email = get_jwt_identity()
+    user = users.find_one({'email': email})
+    data = request.get_json()
+    user['gas_price'] = data['gas']
+    user['electricity_price'] = data['electricity']
+    user['water_price'] = data['water']
+    user['min_house_temp'] = data['minTemp']
+    user['max_house_temp'] = data['maxTemp']
+    user['enable_notifications'] = data['receiveNotifications']
+    user['notifications_default_timing'] = data['timing']
+
+    users.update_one({'email': email}, {"$set": user})
+
+    return jsonify({"success": True, "status": "success", "message": "Settings updated successfully"})
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
