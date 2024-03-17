@@ -6,11 +6,12 @@ from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
-from constants import GAS_PRICE, WATER_PRICE, ELETRICITY_PRICE
 from flask_cors import CORS
 from datetime import datetime, timedelta
 import plotly.express as px
-import plotly.graph_objects as go   
+import plotly.graph_objects as go
+
+from backend.app2 import getPreferedTemperatureMax, getPreferedTemperatureMin, isAtHome   
 
 '''
 @app.route('C', methods=['GET'])
