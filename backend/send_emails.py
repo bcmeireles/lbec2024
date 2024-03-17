@@ -42,13 +42,10 @@ def send_mail(target, title, start):
 
 while True:
     to_notify = calendar_data.find({"toNotify": True})
-    print(datetime.datetime.now())
     for entry in to_notify:
         entry_date = datetime.datetime.strptime(entry["start"], "%Y-%m-%dT%H:%M:%S+00:00")
         notify_timing = entry["notifyTiming"]
         current_time = datetime.datetime.now()
-
-        print(entry_date)
 
         # check if current time is within entry["notifyTiming"] minutes of entry["date"]
         if (entry_date - current_time).total_seconds() / 60 <= notify_timing:
