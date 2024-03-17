@@ -516,9 +516,24 @@ def addEvent(day, title, description, at_home, time):
     event_calendar.insert_one(new_data)
 
 @app.route('DELETE', methods=['DELETE'])
-def deleteEvent(title, day):
+def deleteEvent(day, title):
     event_calendar.find_one_and_delete({'title': title}, {'day': day})
 
+@app.route('PUT', methods=['PUT'])
+def editEvent(day, title, which, edit): #which is a num value from 0 to 4 that assinalates what will be changed
+    event = event_calendar.find_one({'title': title}, {'day': day})
+    if which == 0:
+        event['title'] = edit
+    elif which == 1:
+        event['description'] = edit
+    elif which == 2:
+        event['time'] = edit
+    elif which == 3:
+        event['at_home'] = bool(edit)
+    elif which == 4:
+        event['day'] = edit
+        
+    event_calendar.update_one({'title': title, 'day': day}, {"$set": event})
 
 
 if __name__ == "__main__":
