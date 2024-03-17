@@ -537,6 +537,16 @@ def import_data():
 
     return jsonify({"success": True, "status": "success", "message": "Data imported successfully"})
 
+@app.route("/export", methods=["GET"])
+@jwt_required()
+def export_data():
+    email = get_jwt_identity()
+    data = consumption_data.find({'email': email})
+    returning = []
+    for entry in data:
+        del entry['_id']
+        returning.append(entry)
+    return jsonify({"success": True, "status": "success", email: returning}), 200, {'Content-Type': 'application/json'}
 
 
 if __name__ == "__main__":

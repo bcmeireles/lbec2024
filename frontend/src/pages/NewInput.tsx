@@ -66,6 +66,29 @@ function NewInput() {
     }
   };
 
+  const handleExportClick = async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:5000/export', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'data.json'; // you can give any name for the file here
+      a.click();
+    } else {
+      console.log('Error:', response.status);
+    }
+  };
+
   return (
     <div className="h-screen bg-white flex flex-col items-center justify-center px-6 relative">
       <img src={waves} alt="Waves" className="absolute bottom-0 left-0 w-full h-full" />
@@ -87,6 +110,9 @@ function NewInput() {
             />
           <button onClick={handleImport} className="w-64 py-7 px-11 bg-blue-500 text-white font-bold rounded-lg text-2xl">
             Import
+          </button>
+          <button onClick={handleExportClick} className="w-64 py-7 px-11 bg-blue-500 text-white font-bold rounded-lg text-2xl">
+            Export
           </button>
         </div>
       </div>

@@ -24,7 +24,7 @@ function Navbar(props: { selected: number }) {
       href: '/calendar',
     },
     {
-      name: 'Add Data',
+      name: 'Data',
       icon: AddDataIcon,
       iconSelected: AddDataIconSelected,
       href: '/newinput',
