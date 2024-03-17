@@ -51,6 +51,7 @@ function MyCalendar() {
     <div className="h-screen bg-white flex items-center justify-center px-6 relative">
       <img src={waves} alt="Waves" className="absolute bottom-0 left-0 w-full h-full" />
       <div className="z-10 relative">
+      <button onClick={() => {window.location.href = "/createevent"}}>Create Event</button>
         <Calendar
           localizer={localizer}
           events={events}

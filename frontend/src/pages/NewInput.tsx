@@ -18,7 +18,8 @@ function NewInput() {
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.data);
+        console.log(data);
+        setUser(data.data.name);
       } else {
         console.log('Error:', response.status);
       }
